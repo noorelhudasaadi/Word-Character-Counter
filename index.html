@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word & Character Counter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .counter-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+            max-width: 800px;
+            width: 100%;
+            animation: slideIn 0.8s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.2rem;
+            font-weight: 300;
+        }
+
+        .textarea-container {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        .char-limit-indicator {
+            position: absolute;
+            top: -5px;
+            right: 15px;
+            font-size: 0.8rem;
+            color: #999;
+            background: white;
+            padding: 0 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            z-index: 1;
+        }
+
+        .char-limit-indicator.warning {
+            color: #f39c12;
+        }
+
+        .char-limit-indicator.danger {
+            color: #e74c3c;
+        }
+
+        #textInput {
+            width: 100%;
+            min-height: 300px;
+            padding: 25px;
+            border: 2px solid #e1e5e9;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            font-family: inherit;
+        }
+
+        #textInput:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        #textInput::placeholder {
+            color: #aaa;
+            font-style: italic;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .control-btn {
+            padding: 12px 24px;
+            border: 2px solid #e1e5e9;
+            background: #f8f9fa;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .control-btn:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .control-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 18px;
+            padding: 25px;
+            text-align: center;
+            border: 2px solid #e1e5e9;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-label {
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .advanced-stats {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .advanced-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .advanced-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .advanced-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .advanced-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .advanced-label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .reading-time {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .reading-time-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .reading-time-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .reading-item {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .reading-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .reading-label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        .progress-section {
+            margin-bottom: 25px;
+        }
+
+        .progress-item {
+            margin-bottom: 15px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e1e5e9;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .word-frequency {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid #e1e5e9;
+        }
+
+        .frequency-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #333;
+            text-align: center;
+        }
+
+        .frequency-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .frequency-item {
+            background: white;
+            border-radius: 8px;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            border: 1px solid #e1e5e9;
+        }
+
+        .frequency-word {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .frequency-count {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .counter-container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .title {
+                font-size: 2.2rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 15px;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+
+            .controls {
+                gap: 10px;
+            }
+
+            .control-btn {
+                padding: 10px 16px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="counter-container">
+        <div class="header">
+            <h1 class="title">Word Counter</h1>
+            <p class="subtitle">Analyze your text with advanced statistics</p>
+        </div>
+
+        <div class="textarea-container">
+            <div class="char-limit-indicator" id="charLimitIndicator">0 / 10,000</div>
+            <textarea 
+                id="textInput" 
+                placeholder="Start typing or paste your text here... This advanced word counter will analyze your text in real-time, providing detailed statistics including word count, character count, reading time, and much more!"
+                maxlength="10000"
+            ></textarea>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn" onclick="clearText()">Clear All</button>
+            <button class="control-btn" onclick="copyStats()">Copy Stats</button>
+            <button class="control-btn" onclick="toggleCase('upper')">UPPERCASE</button>
+            <button class="control-btn" onclick="toggleCase('lower')">lowercase</button>
+            <button class="control-btn" onclick="toggleCase('title')">Title Case</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="wordCount">0</div>
+                <div class="stat-label">Words</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="charCount">0</div>
+                <div class="stat-label">Characters</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="charCountNoSpaces">0</div>
+                <div class="stat-label">Chars (No Spaces)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="sentenceCount">0</div>
+                <div class="stat-label">Sentences</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="paragraphCount">0</div>
+                <div class="stat-label">Paragraphs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="lineCount">0</div>
+                <div class="stat-label">Lines</div>
+            </div>
+        </div>
+
+        <div class="reading-time">
+            <div class="reading-time-title">📖 Estimated Reading Time</div>
+            <div class="reading-time-grid">
+                <div class="reading-item">
+                    <div class="reading-value" id="readingTimeSlow">0m</div>
+                    <div class="reading-label">Slow (150 WPM)</div>
+                </div>
+                <div class="reading-item">
+                    <div class="reading-value" id="readingTimeAvg">0m</div>
+                    <div class="reading-label">Average (200 WPM)</div>
+                </div>
+                <div class="reading-item">
+                    <div class="reading-value" id="readingTimeFast">0m</div>
+                    <div class="reading-label">Fast (250 WPM)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="advanced-stats">
+            <div class="advanced-title">📊 Advanced Analytics</div>
+            <div class="advanced-grid">
+                <div class="advanced-item">
+                    <div class="advanced-value" id="avgWordsPerSentence">0</div>
+                    <div class="advanced-label">Avg Words/Sentence</div>
+                </div>
+                <div class="advanced-item">
+                    <div class="advanced-value" id="avgCharsPerWord">0</div>
+                    <div class="advanced-label">Avg Chars/Word</div>
+                </div>
+                <div class="advanced-item">
+                    <div class="advanced-value" id="longestWord">-</div>
+                    <div class="advanced-label">Longest Word</div>
+                </div>
+                <div class="advanced-item">
+                    <div class="advanced-value" id="shortestWord">-</div>
+                    <div class="advanced-label">Shortest Word</div>
+                </div>
+                <div class="advanced-item">
+                    <div class="advanced-value" id="uniqueWords">0</div>
+                    <div class="advanced-label">Unique Words</div>
+                </div>
+                <div class="advanced-item">
+                    <div class="advanced-value" id="lexicalDiversity">0%</div>
+                    <div class="advanced-label">Vocabulary Richness</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-item">
+                <div class="progress-header">
+                    <span>Character Limit Progress</span>
+                    <span id="charProgress">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="charProgressBar"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="word-frequency">
+            <div class="frequency-title">🔤 Most Frequent Words</div>
+            <div class="frequency-list" id="frequencyList">
+                <div style="text-align: center; color: #999; grid-column: 1 / -1;">Start typing to see word frequency analysis</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const textInput = document.getElementById('textInput');
+        
+        function updateStats() {
+            const text = textInput.value;
+            const trimmedText = text.trim();
+            
+            // Basic counts
+            const words = trimmedText ? trimmedText.split(/\s+/).filter(word => word.length > 0) : [];
+            const characters = text.length;
+            const charactersNoSpaces = text.replace(/\s/g, '').length;
+            const sentences = trimmedText ? trimmedText.split(/[.!?]+/).filter(s => s.trim().length > 0).length : 0;
+            const paragraphs = trimmedText ? trimmedText.split(/\n\s*\n/).filter(p => p.trim().length > 0).length : 0;
+            const lines = text ? text.split('\n').length : 0;
+            
+            // Update basic stats
+            document.getElementById('wordCount').textContent = words.length;
+            document.getElementById('charCount').textContent = characters;
+            document.getElementById('charCountNoSpaces').textContent = charactersNoSpaces;
+            document.getElementById('sentenceCount').textContent = sentences;
+            document.getElementById('paragraphCount').textContent = paragraphs;
+            document.getElementById('lineCount').textContent = lines;
+            
+            // Character limit indicator
+            const charLimit = 10000;
+            const charPercentage = (characters / charLimit) * 100;
+            const indicator = document.getElementById('charLimitIndicator');
+            indicator.textContent = `${characters} / ${charLimit.toLocaleString()}`;
+            
+            if (charPercentage > 90) {
+                indicator.className = 'char-limit-indicator danger';
+            } else if (charPercentage > 75) {
+                indicator.className = 'char-limit-indicator warning';
+            } else {
+                indicator.className = 'char-limit-indicator';
+            }
+            
+            // Progress bar
+            document.getElementById('charProgress').textContent = `${Math.round(charPercentage)}%`;
+            document.getElementById('charProgressBar').style.width = `${Math.min(charPercentage, 100)}%`;
+            
+            // Reading time calculations
+            const wordsPerMinuteSlow = 150;
+            const wordsPerMinuteAvg = 200;
+            const wordsPerMinuteFast = 250;
+            
+            const readingTimeSlow = Math.ceil(words.length / wordsPerMinuteSlow);
+            const readingTimeAvg = Math.ceil(words.length / wordsPerMinuteAvg);
+            const readingTimeFast = Math.ceil(words.length / wordsPerMinuteFast);
+            
+            document.getElementById('readingTimeSlow').textContent = formatTime(readingTimeSlow);
+            document.getElementById('readingTimeAvg').textContent = formatTime(readingTimeAvg);
+            document.getElementById('readingTimeFast').textContent = formatTime(readingTimeFast);
+            
+            // Advanced statistics
+            const avgWordsPerSentence = sentences > 0 ? (words.length / sentences).toFixed(1) : 0;
+            const totalCharsInWords = words.join('').length;
+            const avgCharsPerWord = words.length > 0 ? (totalCharsInWords / words.length).toFixed(1) : 0;
+            
+            // Find longest and shortest words
+            let longestWord = '-';
+            let shortestWord = '-';
+            if (words.length > 0) {
+                longestWord = words.reduce((a, b) => a.length > b.length ? a : b);
+                shortestWord = words.reduce((a, b) => a.length < b.length ? a : b);
+            }
+            
+            // Unique words and lexical diversity
+            const uniqueWords = new Set(words.map(word => word.toLowerCase())).size;
+            const lexicalDiversity = words.length > 0 ? ((uniqueWords / words.length) * 100).toFixed(1) : 0;
+            
+            document.getElementById('avgWordsPerSentence').textContent = avgWordsPerSentence;
+            document.getElementById('avgCharsPerWord').textContent = avgCharsPerWord;
+            document.getElementById('longestWord').textContent = longestWord.length > 15 ? longestWord.substring(0, 15) + '...' : longestWord;
+            document.getElementById('shortestWord').textContent = shortestWord;
+            document.getElementById('uniqueWords').textContent = uniqueWords;
+            document.getElementById('lexicalDiversity').textContent = lexicalDiversity + '%';
+            
+            // Word frequency analysis
+            updateWordFrequency(words);
+        }
+        
+        function formatTime(minutes) {
+            if (minutes === 0) return '0m';
+            if (minutes < 60) return minutes + 'm';
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return hours + 'h ' + (mins > 0 ? mins + 'm' : '');
+        }
+        
+        function updateWordFrequency(words) {
+            const frequencyList = document.getElementById('frequencyList');
+            
+            if (words.length === 0) {
+                frequencyList.innerHTML = '<div style="text-align: center; color: #999; grid-column: 1 / -1;">Start typing to see word frequency analysis</div>';
+                return;
+            }
+            
+            // Count word frequencies (case-insensitive, filter out common words)
+            const commonWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them']);
+            
+            const wordCounts = {};
+            words.forEach(word => {
+                const cleanWord = word.toLowerCase().replace(/[^\w]/g, '');
+                if (cleanWord.length > 2 && !commonWords.has(cleanWord)) {
+                    wordCounts[cleanWord] = (wordCounts[cleanWord] || 0) + 1;
+                }
+            });
+            
+            // Sort by frequency and get top 12
+            const sortedWords = Object.entries(wordCounts)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 12);
+            
+            if (sortedWords.length === 0) {
+                frequencyList.innerHTML = '<div style="text-align: center; color: #999; grid-column: 1 / -1;">No significant words found</div>';
+                return;
+            }
+            
+            frequencyList.innerHTML = sortedWords.map(([word, count]) => `
+                <div class="frequency-item">
+                    <span class="frequency-word">${word}</span>
+                    <span class="frequency-count">${count}</span>
+                </div>
+            `).join('');
+        }
+        
+        function clearText() {
+            textInput.value = '';
+            textInput.focus();
+            updateStats();
+        }
+        
+        function copyStats() {
+            const stats = `
+Text Analysis Report
+==================
+Words: ${document.getElementById('wordCount').textContent}
+Characters: ${document.getElementById('charCount').textContent}
+Characters (no spaces): ${document.getElementById('charCountNoSpaces').textContent}
+Sentences: ${document.getElementById('sentenceCount').textContent}
+Paragraphs: ${document.getElementById('paragraphCount').textContent}
+Lines: ${document.getElementById('lineCount').textContent}
+
+Reading Time:
+- Slow reader: ${document.getElementById('readingTimeSlow').textContent}
+- Average reader: ${document.getElementById('readingTimeAvg').textContent}
+- Fast reader: ${document.getElementById('readingTimeFast').textContent}
+
+Advanced Stats:
+- Average words per sentence: ${document.getElementById('avgWordsPerSentence').textContent}
+- Average characters per word: ${document.getElementById('avgCharsPerWord').textContent}
+- Unique words: ${document.getElementById('uniqueWords').textContent}
+- Vocabulary richness: ${document.getElementById('lexicalDiversity').textContent}
+            `.trim();
+            
+            navigator.clipboard.writeText(stats).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.style.background = 'linear-gradient(135deg, #00b894, #00a085)';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            });
+        }
+        
+        function toggleCase(caseType) {
+            const text = textInput.value;
+            if (!text) return;
+            
+            let newText;
+            switch(caseType) {
+                case 'upper':
+                    newText = text.toUpperCase();
+                    break;
+                case 'lower':
+                    newText = text.toLowerCase();
+                    break;
+                case 'title':
+                    newText = text.replace(/\w\S*/g, (txt) => 
+                        txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+                    );
+                    break;
+            }
+            
+            textInput.value = newText;
+            updateStats();
+        }
+        
+        // Real-time updates
+        textInput.addEventListener('input', updateStats);
+        textInput.addEventListener('paste', () => setTimeout(updateStats, 10));
+        
+        // Initialize
+        updateStats();
+        
+        // Auto-focus on load
+        window.addEventListener('load', () => textInput.focus());
+    </script>
+</body>
+</html>
